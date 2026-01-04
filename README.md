@@ -1,100 +1,38 @@
-# LanSpammer
+# LanSpammer Update 🔥
 
-A lightweight Java-based tool designed to demonstrate how the Minecraft "Local World" discovery protocol works. This application uses **UDP Multicast** to announce virtual game sessions to all Minecraft clients within the same network segment.
+Самый злой и обновляемый **LAN Spammer** для Minecraft Java Edition. Этот инструмент заливает локальную сеть тонной фейковых серверов — все в Multiplayer списке увидят твой спам и будут в ахуе пытаться коннектиться к несуществующим мирам.
 
-## 🚀 Overview
+Я (ilyshaxoroshi) форкнул оригинал и теперь буду **обновлять этот спамер каждую неделю**: добавлять новые тролльские MOTD, рандомизацию, поддержку цветов, больше серверов за раз, авто-биндинг на все интерфейсы и другие пиздатые фичи. Следи за апдейтами — будет только жёстче!
 
-Minecraft uses a specific protocol to find games on a local network. This program mimics a server's "heartbeat" by broadcasting specially formatted packets to a dedicated multicast address.
+## Что делает эта штука?
+- Отправляет UDP мультикаст пакеты на 224.0.2.60:4445 (стандарт Minecraft LAN discovery).
+- Создаёт кучу фейковых серверов с кастомными названиями (MOTD) и портами.
+- Поддержка Minecraft цветовых кодов (§a, §b, §l, §k и т.д.) для яркого троллинга.
+- Работает в любой локалке: школа, уни, офис, общежитие — все увидят твой спам.
 
-### Key Features
+## Фичи (и будут добавляться новые)
+- Много серверов за один цикл
+- Кастомные MOTD с цветами и обфускацией
+- Настройка TTL для распространения через роутеры
+- Простой запуск без компиляции (пока что .java, скоро .jar)
 
-* **Protocol Simulation:** Implements the `[MOTD]...[/MOTD][AD]...[/AD]` packet structure.
-* **Multi-Session Emulation:** Demonstrates the ability to broadcast multiple virtual world entries simultaneously.
-* **Custom Formatting:** Supports Minecraft color codes (`§`) and formatting styles.
+## Как запустить эту крутую штучку
+1. Установи JDK 11+.
+2. Скачай LanSpammer.java.
+3. Найди свой локальный IP (ipconfig / ifconfig).
+4. В коде замени `yourIp` на свой.
+5. Запусти: `java LanSpammer.java`
 
-## 🛠 How It Works
+Для теста запусти Minecraft и посмотри в Multiplayer — список будет в говне от фейков.
 
-The program operates on the standard Minecraft discovery parameters:
+## Будущие обновления (каждую неделю.)
+- Рандомные MOTD из списка тролльских фраз
+- Авто-определение всех сетевых интерфейсов
+- Конфиг через аргументы командной строки
+- Спам на несколько мультикаст адресов
+- GUI версия для ленивых
+- Ещё больше серверов без лагов
 
-* **Multicast Address:** `224.0.2.60`
-* **Destination Port:** `4445`
-* **Protocol:** UDP (User Datagram Protocol)
+Старсни, форкни, юзай и предлагай идеи в Issues — сделаем самый ебанутый LAN спаммер в истории!
 
-Every 1.5 seconds, the application sends a packet containing the Server Name (MOTD) and a Port. Any Minecraft client listening on the same network will interpret these packets and display the entries in the **Multiplayer** menu under the "LAN Games" section.
-
-## 💻 Usage
-
-### Prerequisites
-
-* Java Development Kit (JDK) 11 or higher.
-* Minecraft Java Edition (for testing).
-
-### Running the Application
-
-1. Download the `LanSpammer.java` file.
-2. Open your terminal/command prompt in the file's directory.
-3. Execute the program:
-```bash
-java LanSpammer.java
-
-```
-
-
-
-## ⚙️ Configuration & Network Binding
-
-By default, Java may pick the wrong network interface (e.g., a virtual adapter or a secondary Wi-Fi card). To ensure others can see your broadcast, you must bind the application to your active network IP.
-
-### 1. Identify Your IP
-
-Open your terminal and find your local IP address (e.g., `192.168.x.x` or your specific virtual network IP):
-
-* **Windows:** `ipconfig`
-* **Linux/macOS:** `ifconfig` or `ip a`
-
-### 2. Update the Source Code
-
-Locate the `yourIp` variable in the code and replace it with your actual address:
-
-```java
-// IP
-String yourIp = "YOUR_IP_HERE"; 
-
-```
-
-### 3. Adjusting TTL (Time To Live)
-
-The `setTimeToLive(int ttl)` method determines how many "hops" (routers) the packet can pass through.
-
-* `1`: Stays within your immediate local subnet (Default).
-* `4+`: Recommended for complex virtual networks to ensure the packet reaches all peers.
-
-## 📝 Color Formatting
-
-You can use Minecraft color symbols (§) to style your signature:
-
-* `§b` - Aqua
-* `§l` - **Bold**
-* `§k` - Obfuscated (Glitch effect)
-* `§6` - Gold
-
-**Example:** `§l§6[SERVER] §bMy Signature`
-
-
-
-## 📝 Configuration
-
-You can modify the following variables directly in the source code to change the broadcast behavior:
-
-* `motd`: Change the text displayed in the server list.
-* `serverPort`: Change the port the client will attempt to connect to.
-* `i <= 5`: Adjust the number of virtual worlds to broadcast.
-
-## Screenshot
-
-<img width="1920" height="1080" alt="{7C226097-A9BF-456B-A67B-D4C381256A1F}" src="https://github.com/user-attachments/assets/240532d5-69f7-44c2-9f1a-4332a71467ee" />
-
-
-## ⚠️ Educational Disclaimer
-
-This project is for **educational and testing purposes only**. It is intended to help developers understand network socket programming and the Minecraft protocol. Please use it responsibly within your own private network environments.
+**Внимание:** Только для троллинга в своей сети. Не будь долбоёбом в публичных местах. 😈
