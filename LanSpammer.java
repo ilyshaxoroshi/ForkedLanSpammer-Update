@@ -47,7 +47,8 @@ public class LanSpammer {
 
                 for (int i = 1; i <= servers; i++) {
 
-                    String motd = motdBase + i;
+                    String motdRaw = motdBase + i;
+                    String motd = motdRaw.replace("&", "\u00A7");
 
                     int serverPort;
                     do {
