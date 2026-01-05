@@ -2,3 +2,8 @@
 ip: "0.0.0.0"
 servers: 10
 motd: "example motd "
+  # available modes (suffix-mode):
+  #   numbers (default) - range from 1 to "servers" (for example, 1 to 10 if using the default setting)
+  #   random - 6 random letters and numbers together (for example, Aa2B3c)
+  #   nothing - it already tells what is it
+suffix-mode: nothing

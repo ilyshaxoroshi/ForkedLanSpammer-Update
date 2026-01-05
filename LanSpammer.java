@@ -14,6 +14,7 @@ public class LanSpammer {
         String yourIp;
         int servers;
         String motdBase;
+        String suffixMode;
 
         try (InputStream in = new FileInputStream("config.yml")) {
             Yaml yaml = new Yaml();
@@ -22,6 +23,8 @@ public class LanSpammer {
             yourIp = (String) config.get("ip");
             servers = ((Number) config.get("servers")).intValue();
             motdBase = (String) config.get("motd");
+            Object modeObj = config.get("suffix-mode");
+            suffixMode = (modeObj != null) ? modeObj.toString().toLowerCase() : "numbers";
         } catch (Exception e) {
             throw new RuntimeException("cant read config.yml", e);
         }
@@ -47,7 +50,26 @@ public class LanSpammer {
 
                 for (int i = 1; i <= servers; i++) {
 
-                    String motdRaw = motdBase + i;
+                    String suffix;
+                    switch (suffixMode) {
+                        case "random":
+                            String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                            StringBuilder sb = new StringBuilder(6);
+                            for (int j = 0; j < 6; j++) {
+                                sb.append(chars.charAt(random.nextInt(chars.length())));
+                            }
+                            suffix = sb.toString();
+                            break;
+                        case "nothing":
+                            suffix = "";
+                            break;
+                        case "numbers":
+                        default:
+                            suffix = String.valueOf(i);
+                            break;
+                    }
+
+                    String motdRaw = motdBase + suffix;
                     String motd = motdRaw.replace("&", "\u00A7");
 
                     int serverPort;
