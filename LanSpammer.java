@@ -3,6 +3,9 @@ import java.nio.charset.StandardCharsets;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Random;
+import java.util.HashSet;
+import java.util.Set;
 import org.yaml.snakeyaml.Yaml;
 
 public class LanSpammer {
@@ -26,6 +29,9 @@ public class LanSpammer {
         String multicastAddr = "224.0.2.60";
         int port = 4445;
 
+        Random random = new Random();
+        Set<Integer> usedPorts = new HashSet<>();
+
         try {
             InetAddress localAddr = InetAddress.getByName(yourIp);
             InetAddress group = InetAddress.getByName(multicastAddr);
@@ -37,10 +43,16 @@ public class LanSpammer {
             System.out.println("Started on Ip: " + yourIp);
 
             while (true) {
+                usedPorts.clear();
+
                 for (int i = 1; i <= servers; i++) {
 
                     String motd = motdBase + i;
-                    int serverPort = 25560 + i;
+
+                    int serverPort;
+                    do {
+                        serverPort = random.nextInt(65535 - 1024 + 1) + 1024;
+                    } while (!usedPorts.add(serverPort));
 
                     String message =
                             "[MOTD]" + motd + "[/MOTD][AD]" + serverPort + "[/AD]";
