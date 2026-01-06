@@ -29,7 +29,7 @@ Minecraft LAN Server Spammer
     (на Linux/Mac используйте : вместо ;).
 
 ## Пример config.yml
-YAML
+``` YAML
 
 server-count: 500
 delay-ms: 200
@@ -40,6 +40,7 @@ motds:
   - "§e§lGIRLS ONLY §d§l<3"
   - "§4§l dsc.gg/dxxtmine"
   - "Извините за неудобства, тестирую программу"
+```
 
 ## Планируемые обновления
 
