@@ -1,7 +1,7 @@
 
 <img width="764" height="67" alt="The-ForkedLanSpammer(1)" src="https://github.com/user-attachments/assets/d24a3265-9003-4861-a0ba-87445a541989" />
 
-ForkedLanSpammer Update
+# ForkedLanSpammer Update
 
 Minecraft LAN Server Spammer
 Инструмент для создания множества фейковых серверов в локальной сети Minecraft. Все игроки в сети увидят эти сервера в списке Multiplayer и смогут попытаться подключиться (безуспешно).
@@ -16,7 +16,7 @@ Minecraft LAN Server Spammer
 
 <img width="764" height="67" alt="The-ForkedLanSpammer" src="https://github.com/user-attachments/assets/83a4b485-04a7-40e7-a981-d24d287143cf" />
 
-Как запустить
+## Как запустить
 
     Установите JDK 11 или новее.
     Скачайте файлы репозитория: LanSpammer.java, config.yml, snakeyaml-2.6-SNAPSHOT.jar.
@@ -28,7 +28,7 @@ Minecraft LAN Server Spammer
 
     (на Linux/Mac используйте : вместо ;).
 
-Пример config.yml
+## Пример config.yml
 YAML
 
 server-count: 500
@@ -41,7 +41,7 @@ motds:
   - "§4§l dsc.gg/dxxtmine"
   - "Извините за неудобства, тестирую программу"
 
-Планируемые обновления
+## Планируемые обновления
 
     Интеграция с Discord webhook.
     Многопоточный спам.
