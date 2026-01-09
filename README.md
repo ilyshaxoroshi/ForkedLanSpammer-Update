@@ -24,7 +24,8 @@ Minecraft LAN Server Spammer
     Запустите командой:
     text
 
-    java -cp ".;snakeyaml-2.6-SNAPSHOT.jar" LanSpammer.java
+    javac LanSpammerGUI.java
+    java LanSpammerGUI
 
     (на Linux/Mac используйте : вместо ;).
 
