@@ -17,8 +17,11 @@ public class LanSpammerGUI {
     private static JTextField serversField;
     private static JComboBox<String> suffixCombo;
     private static JTextArea motdsArea;
-    private static JTextField webhookUrlField;      // поле для webhook URL
-    private static JButton testWebhookButton;       // кнопка теста
+    private static JTextField webhookUrlField;
+    private static JTextField lanIntervalField;
+    private static JComboBox<String> adModeCombo;
+    private static JTextField customAdTextField;
+    private static JButton testWebhookButton;
     private static JButton startButton;
     private static JButton stopButton;
     private static JLabel statusLabel;
@@ -26,25 +29,24 @@ public class LanSpammerGUI {
 
     private static volatile boolean running = false;
     private static Thread spamThread;
+    private static Thread lanSenderThread;
     private static long totalSent = 0;
 
     private static final Random rnd = new Random();
-    private static final String[] EMOJIS = {
-        "🔥", "💀", "😂", "😈", "🚀", "🤡", "🖕", "🍆", "💥", "🤑", "👹", "⚡", "🌪️", "🧨", "💣"
-    };
+    private static final String[] EMOJIS = {"🔥", "💀", "😂", "😈", "🚀", "🤡", "🖕", "🍆", "💥", "🤑"};
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> createAndShowGUI(args));
+        SwingUtilities.invokeLater(LanSpammerGUI::createAndShowGUI);
     }
 
-    private static void createAndShowGUI(String[] args) {
+    private static void createAndShowGUI() {
         frame = new JFrame("ForkedLanSpammer GUI");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(850, 750);
+        frame.setSize(950, 850);
         frame.setLayout(new BorderLayout(10, 10));
 
         // Панель параметров
-        JPanel paramsPanel = new JPanel(new GridLayout(5, 2, 10, 10));
+        JPanel paramsPanel = new JPanel(new GridLayout(7, 2, 10, 10));
         paramsPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         paramsPanel.add(new JLabel("IP (0.0.0.0 — все интерфейсы):"));
@@ -55,9 +57,21 @@ public class LanSpammerGUI {
         serversField = new JTextField("10");
         paramsPanel.add(serversField);
 
-        paramsPanel.add(new JLabel("Режим суффикса:"));
+        paramsPanel.add(new JLabel("Режим суффикса MOTD:"));
         suffixCombo = new JComboBox<>(new String[]{"numbers", "random", "nothing"});
         paramsPanel.add(suffixCombo);
+
+        paramsPanel.add(new JLabel("Интервал отправки списка LAN (сек):"));
+        lanIntervalField = new JTextField("300");
+        paramsPanel.add(lanIntervalField);
+
+        paramsPanel.add(new JLabel("Режим AD-порта:"));
+        adModeCombo = new JComboBox<>(new String[]{"numbers (классика)", "random-digits", "custom-text", "nothing"});
+        paramsPanel.add(adModeCombo);
+
+        paramsPanel.add(new JLabel("Кастомный текст для AD (если выбран):"));
+        customAdTextField = new JTextField("&cThats New version OF FLS on github!");
+        paramsPanel.add(customAdTextField);
 
         paramsPanel.add(new JLabel("Discord Webhook URL:"));
         webhookUrlField = new JTextField("");
@@ -65,13 +79,14 @@ public class LanSpammerGUI {
 
         // MOTD
         JPanel motdPanel = new JPanel(new BorderLayout());
-        motdPanel.setBorder(BorderFactory.createTitledBorder("MOTD (по одной строке, используй & для цветов)"));
+        motdPanel.setBorder(BorderFactory.createTitledBorder("MOTD (по одной строке, & для цветов)"));
         motdsArea = new JTextArea(14, 60);
         JScrollPane scroll = new JScrollPane(motdsArea);
         motdPanel.add(scroll, BorderLayout.CENTER);
 
-        // Кнопки и статус
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
+        // Кнопки в 3 ряда по 2 + отступы
+        JPanel buttonPanel = new JPanel(new GridLayout(3, 3, 20, 10));
+
         JButton loadButton = new JButton("Загрузить config.yml");
         JButton saveButton = new JButton("Сохранить config.yml");
         testWebhookButton = new JButton("Тест Webhook");
@@ -79,20 +94,36 @@ public class LanSpammerGUI {
         stopButton = new JButton("Стоп спама");
         stopButton.setEnabled(false);
 
+        // Ряд 1
         buttonPanel.add(loadButton);
+        buttonPanel.add(Box.createHorizontalStrut(20));
         buttonPanel.add(saveButton);
-        buttonPanel.add(testWebhookButton);
-        buttonPanel.add(startButton);
-        buttonPanel.add(stopButton);
 
+        // Ряд 2
+        buttonPanel.add(testWebhookButton);
+        buttonPanel.add(Box.createHorizontalStrut(20));
+        buttonPanel.add(startButton);
+
+        // Ряд 3
+        buttonPanel.add(stopButton);
+        buttonPanel.add(Box.createHorizontalStrut(20));
+        buttonPanel.add(new JLabel("")); // пустая ячейка для симметрии
+
+        // Статус и счётчик под кнопками
+        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         statusLabel = new JLabel("Статус: готов");
         counterLabel = new JLabel("Отправлено серверов: 0");
-        buttonPanel.add(statusLabel);
-        buttonPanel.add(counterLabel);
+        statusPanel.add(statusLabel);
+        statusPanel.add(Box.createHorizontalStrut(30));
+        statusPanel.add(counterLabel);
+
+        JPanel fullBottom = new JPanel(new BorderLayout());
+        fullBottom.add(buttonPanel, BorderLayout.CENTER);
+        fullBottom.add(statusPanel, BorderLayout.SOUTH);
 
         frame.add(paramsPanel, BorderLayout.NORTH);
         frame.add(motdPanel, BorderLayout.CENTER);
-        frame.add(buttonPanel, BorderLayout.SOUTH);
+        frame.add(fullBottom, BorderLayout.SOUTH);
 
         loadButton.addActionListener(e -> loadConfig());
         saveButton.addActionListener(e -> saveConfig());
@@ -100,7 +131,7 @@ public class LanSpammerGUI {
         startButton.addActionListener(e -> startSpamming());
         stopButton.addActionListener(e -> stopSpamming());
 
-        loadConfig(); // загружаем при старте
+        loadConfig();
         frame.setVisible(true);
     }
 
@@ -112,6 +143,9 @@ public class LanSpammerGUI {
             int servers = 10;
             String suffix = "numbers";
             String webhook = "";
+            int lanInterval = 300;
+            String adMode = "numbers (классика)";
+            String customAdText = "&cThats New version OF FLS on github!";
 
             String line;
             while ((line = br.readLine()) != null) {
@@ -148,6 +182,9 @@ public class LanSpammerGUI {
                         case "servers": servers = Integer.parseInt(value); break;
                         case "suffix-mode": suffix = value.toLowerCase(); break;
                         case "webhook-url": webhook = value; break;
+                        case "lan-interval-sec": lanInterval = Integer.parseInt(value); break;
+                        case "ad-mode": adMode = value; break;
+                        case "custom-ad-text": customAdText = value; break;
                     }
                 }
             }
@@ -156,6 +193,9 @@ public class LanSpammerGUI {
             serversField.setText(String.valueOf(servers));
             suffixCombo.setSelectedItem(suffix);
             webhookUrlField.setText(webhook);
+            lanIntervalField.setText(String.valueOf(lanInterval));
+            adModeCombo.setSelectedItem(adMode);
+            customAdTextField.setText(customAdText);
 
             if (motds.isEmpty()) {
                 motds.addAll(Arrays.asList(
@@ -171,8 +211,11 @@ public class LanSpammerGUI {
             motdsArea.setText(String.join("\n", motds));
 
         } catch (Exception ex) {
-            statusLabel.setText("Статус: config.yml не найден → дефолтные значения");
+            statusLabel.setText("Статус: config.yml не найден → дефолт");
             motdsArea.setText("§c§lFREE OP §a§lJOIN FAST OR DIE\n§k§lHACKED§r §b§lBY ilyshaxoroshi\n§e§lGIRLS ONLY §d§l<3\n§4§l dsc.gg/dxxtmine\n§4§l Извините за неудобства, тестирую прогу");
+            lanIntervalField.setText("300");
+            adModeCombo.setSelectedItem("numbers (классика)");
+            customAdTextField.setText("&cThats New version OF FLS on github!");
         }
     }
 
@@ -182,6 +225,9 @@ public class LanSpammerGUI {
             writer.println("servers: " + serversField.getText());
             writer.println("suffix-mode: \"" + suffixCombo.getSelectedItem() + "\"");
             writer.println("webhook-url: \"" + webhookUrlField.getText() + "\"");
+            writer.println("lan-interval-sec: " + lanIntervalField.getText());
+            writer.println("ad-mode: \"" + adModeCombo.getSelectedItem() + "\"");
+            writer.println("custom-ad-text: \"" + customAdTextField.getText() + "\"");
             writer.println("motds:");
             for (String line : motdsArea.getText().split("\\r?\\n")) {
                 if (!line.trim().isEmpty()) {
@@ -190,7 +236,7 @@ public class LanSpammerGUI {
             }
             statusLabel.setText("Статус: конфиг сохранён");
         } catch (Exception ex) {
-            statusLabel.setText("Статус: ошибка сохранения конфига");
+            statusLabel.setText("Статус: ошибка сохранения");
         }
     }
 
@@ -211,7 +257,7 @@ public class LanSpammerGUI {
                 conn.setRequestProperty("Content-Type", "application/json");
 
                 String emoji = EMOJIS[rnd.nextInt(EMOJIS.length)];
-                String payload = "{\"content\": \"Webhook test from ForkedLanSpammer 🔥 " + emoji + " Дата: " + new java.util.Date() + "\"}";
+                String payload = "{\"content\": \"Тест webhook от ForkedLanSpammer 🔥 " + emoji + " | " + new java.util.Date() + "\"}";
 
                 OutputStream os = conn.getOutputStream();
                 os.write(payload.getBytes("UTF-8"));
@@ -253,6 +299,7 @@ public class LanSpammerGUI {
                 int servers = Integer.parseInt(serversField.getText());
                 String suffixMode = (String) suffixCombo.getSelectedItem();
                 String[] motdArray = motdsArea.getText().split("\\r?\\n");
+                String adMode = (String) adModeCombo.getSelectedItem();
 
                 if (motdArray.length == 0 || motdArray[0].trim().isEmpty()) {
                     SwingUtilities.invokeLater(() -> statusLabel.setText("Статус: MOTDs пустые — спам остановлен"));
@@ -273,9 +320,7 @@ public class LanSpammerGUI {
                             case "random":
                                 String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
                                 StringBuilder sb = new StringBuilder(6);
-                                for (int j = 0; j < 6; j++) {
-                                    sb.append(chars.charAt(random.nextInt(chars.length())));
-                                }
+                                for (int j = 0; j < 6; j++) sb.append(chars.charAt(random.nextInt(chars.length())));
                                 suffix = sb.toString();
                                 break;
                             case "nothing":
@@ -290,12 +335,28 @@ public class LanSpammerGUI {
                         String motdRaw = motdBase + suffix;
                         String motd = motdRaw.replace("&", "\u00A7");
 
-                        int serverPort;
-                        do {
-                            serverPort = random.nextInt(65535 - 1024 + 1) + 1024;
-                        } while (!usedPorts.add(serverPort));
+                        String adContent;
+                        switch (adMode) {
+                            case "random-digits":
+                                adContent = String.valueOf(rnd.nextLong() % 100000000L + 10000000L); // 8 цифр
+                                break;
+                            case "custom-text":
+                                adContent = customAdTextField.getText().replace("&", "\u00A7");
+                                break;
+                            case "nothing":
+                                adContent = "";
+                                break;
+                            case "numbers (классика)":
+                            default:
+                                int serverPort;
+                                do {
+                                    serverPort = random.nextInt(65535 - 1024 + 1) + 1024;
+                                } while (!usedPorts.add(serverPort));
+                                adContent = String.valueOf(serverPort);
+                                break;
+                        }
 
-                        String message = "[MOTD]" + motd + "[/MOTD][AD]" + serverPort + "[/AD]";
+                        String message = "[MOTD]" + motd + "[/MOTD][AD]" + adContent + "[/AD]";
                         byte[] buffer = message.getBytes(StandardCharsets.UTF_8);
                         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
                         socket.send(packet);
@@ -307,8 +368,7 @@ public class LanSpammerGUI {
                             counterLabel.setText("Отправлено серверов: " + current);
                         });
 
-                        // Отправляем в webhook
-                        sendToWebhook(current, motd, serverPort);
+                        sendToWebhook(current, motd, adContent);
                     }
 
                     Thread.sleep(1500);
@@ -325,11 +385,100 @@ public class LanSpammerGUI {
             }
         });
         spamThread.start();
+
+        // Периодическая отправка списка LAN
+        lanSenderThread = new Thread(() -> {
+            while (true) {
+                try {
+                    int interval = Integer.parseInt(lanIntervalField.getText());
+                    if (interval < 5) interval = 5;
+                    Thread.sleep(interval * 1000L);
+
+                    if (running) {
+                        sendLanListOnce();
+                        SwingUtilities.invokeLater(() -> statusLabel.setText("Статус: список LAN переотправлен"));
+                    }
+                } catch (InterruptedException ignored) {
+                    break;
+                } catch (Exception ex) {
+                    // тихо
+                }
+            }
+        });
+        lanSenderThread.setDaemon(true);
+        lanSenderThread.start();
     }
 
-    private static void sendToWebhook(long number, String motd, int port) {
+    private static void sendLanListOnce() {
+        try {
+            InetAddress group = InetAddress.getByName(MULTICAST_ADDR);
+            MulticastSocket tempSocket = new MulticastSocket();
+            tempSocket.setTimeToLive(4);
+
+            Random random = new Random();
+            Set<Integer> tempPorts = new HashSet<>();
+
+            int servers = Integer.parseInt(serversField.getText());
+            String suffixMode = (String) suffixCombo.getSelectedItem();
+            String[] motdArray = motdsArea.getText().split("\\r?\\n");
+            String adMode = (String) adModeCombo.getSelectedItem();
+
+            for (int i = 1; i <= servers; i++) {
+                String motdBase = motdArray[random.nextInt(motdArray.length)];
+
+                String suffix;
+                switch (suffixMode) {
+                    case "random":
+                        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+                        StringBuilder sb = new StringBuilder(6);
+                        for (int j = 0; j < 6; j++) sb.append(chars.charAt(random.nextInt(chars.length())));
+                        suffix = sb.toString();
+                        break;
+                    case "nothing":
+                        suffix = "";
+                        break;
+                    case "numbers":
+                    default:
+                        suffix = String.valueOf(i);
+                        break;
+                }
+
+                String motdRaw = motdBase + suffix;
+                String motd = motdRaw.replace("&", "\u00A7");
+
+                String adContent;
+                switch (adMode) {
+                    case "random-digits":
+                        adContent = String.valueOf(rnd.nextLong() % 100000000L + 10000000L);
+                        break;
+                    case "custom-text":
+                        adContent = customAdTextField.getText().replace("&", "\u00A7");
+                        break;
+                    case "nothing":
+                        adContent = "";
+                        break;
+                    default:
+                        int p;
+                        do {
+                            p = random.nextInt(65535 - 1024 + 1) + 1024;
+                        } while (!tempPorts.add(p));
+                        adContent = String.valueOf(p);
+                        break;
+                }
+
+                String message = "[MOTD]" + motd + "[/MOTD][AD]" + adContent + "[/AD]";
+                byte[] buffer = message.getBytes(StandardCharsets.UTF_8);
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+                tempSocket.send(packet);
+            }
+
+            tempSocket.close();
+        } catch (Exception ignored) {}
+    }
+
+    private static void sendToWebhook(long number, String motd, String adContent) {
         String urlStr = webhookUrlField.getText().trim();
-        if (urlStr.isEmpty() || urlStr.equals("https://discord.com/api/webhooks/твой_ид/твой_токен")) return;
+        if (urlStr.isEmpty()) return;
 
         try {
             URI uri = new URI(urlStr);
@@ -340,18 +489,16 @@ public class LanSpammerGUI {
             conn.setRequestProperty("Content-Type", "application/json");
 
             String emoji = EMOJIS[rnd.nextInt(EMOJIS.length)];
-            String cleanMotd = motd.replace("\"", "\\\"").replace("\n", "\\n");
-            String payload = "{\"content\": \"Сервер #" + number + " запустился: " + cleanMotd + " (порт " + port + ") " + emoji + "\"}";
+            String clean = motd.replace("\"", "\\\"").replace("\n", "\\n");
+            String payload = "{\"content\": \"Сервер #" + number + " запустился: " + clean + " (" + adContent + ") " + emoji + "\"}";
 
             OutputStream os = conn.getOutputStream();
             os.write(payload.getBytes("UTF-8"));
             os.flush();
             os.close();
 
-            conn.getResponseCode(); // не ждём ответа, чтобы не тормозить спам
-        } catch (Exception ignored) {
-            // тихо игнорируем, чтобы спам не останавливался
-        }
+            conn.getResponseCode();
+        } catch (Exception ignored) {}
     }
 
     private static void stopSpamming() {
